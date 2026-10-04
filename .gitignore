@@ -1,0 +1,4 @@
+.env
+capture/MusicShareCapture.app/
+node_modules/
+.DS_Store

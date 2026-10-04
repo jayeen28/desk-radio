@@ -1,0 +1,884 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>On my desk</title>
+    <link rel="icon" id="favicon" type="image/svg+xml" href="/favicon.ico" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400..800&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --base: #16141c;
+        --accent: #b9a6ff;
+        --ink: #f5f2ee;
+        --ink-2: rgba(245, 242, 238, 0.68);
+        --ink-3: rgba(245, 242, 238, 0.42);
+        --line: rgba(245, 242, 238, 0.14);
+        --gutter: clamp(20px, 5vw, 72px);
+        color-scheme: dark;
+      }
+
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      html,
+      body {
+        background: var(--base);
+        transition: background-color 1.2s ease;
+      }
+
+      body {
+        font-family: 'Bricolage Grotesque', ui-sans-serif, system-ui, -apple-system, sans-serif;
+        font-optical-sizing: auto;
+        color: var(--ink);
+        min-height: 100dvh;
+        -webkit-font-smoothing: antialiased;
+      }
+
+      button {
+        font: inherit;
+        color: inherit;
+      }
+
+      :focus-visible {
+        outline: 2px solid var(--accent);
+        outline-offset: 3px;
+      }
+
+      /* Blurred artwork fills the room with the track's colour */
+      .ambient {
+        position: fixed;
+        inset: 0;
+        overflow: hidden;
+        pointer-events: none;
+      }
+
+      .ambient img {
+        position: absolute;
+        inset: -20%;
+        width: 140%;
+        height: 140%;
+        object-fit: cover;
+        filter: blur(80px) saturate(1.9) brightness(1.1);
+        opacity: 0;
+        transition: opacity 1.2s ease;
+      }
+
+      .ambient img.on {
+        opacity: 0.8;
+      }
+
+      .ambient::after {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background:
+          linear-gradient(180deg, rgba(0, 0, 0, 0.1) 0%, rgba(0, 0, 0, 0) 30%, rgba(0, 0, 0, 0.6) 100%),
+          radial-gradient(110% 80% at 0% 100%, rgba(0, 0, 0, 0.5), transparent 65%);
+      }
+
+      .stage {
+        position: relative;
+        min-height: 100dvh;
+        display: grid;
+        grid-template-rows: auto minmax(160px, 1fr) auto;
+        grid-template-columns: minmax(0, 1fr);
+        padding: clamp(20px, 4vw, 40px) var(--gutter) clamp(24px, 5vw, 56px);
+      }
+
+      /* Top bar */
+      .top {
+        display: flex;
+        align-items: center;
+        gap: 20px;
+        font-size: 15px;
+        color: var(--ink-2);
+      }
+
+      .onair {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        font-weight: 600;
+        color: var(--ink);
+      }
+
+      .onair i {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background: var(--ink-3);
+      }
+
+      body.live .onair i {
+        background: #ff5a4e;
+        box-shadow: 0 0 0 0 rgba(255, 90, 78, 0.6);
+        animation: beacon 2.4s ease-out infinite;
+      }
+
+      @keyframes beacon {
+        70% {
+          box-shadow: 0 0 0 10px rgba(255, 90, 78, 0);
+        }
+        100% {
+          box-shadow: 0 0 0 0 rgba(255, 90, 78, 0);
+        }
+      }
+
+      .top .spacer {
+        flex: 1;
+      }
+
+      .copy {
+        background: none;
+        border: 1px solid var(--line);
+        border-radius: 999px;
+        padding: 7px 16px;
+        cursor: pointer;
+        color: var(--ink-2);
+        transition: border-color 0.2s, color 0.2s;
+      }
+
+      .copy:hover {
+        border-color: var(--ink-3);
+        color: var(--ink);
+      }
+
+      /* Spectrum */
+      .viz {
+        position: relative;
+        margin: 24px calc(var(--gutter) * -1) 0;
+      }
+
+      .viz .hint {
+        position: absolute;
+        left: var(--gutter);
+        bottom: 24px;
+        font-size: 15px;
+        color: var(--ink-3);
+      }
+
+      .viz canvas {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+      }
+
+      /* Now playing */
+      .now {
+        display: grid;
+        grid-template-columns: auto 1fr;
+        gap: clamp(16px, 2.5vw, 28px);
+        align-items: end;
+        margin-top: 8px;
+      }
+
+      .cover {
+        width: clamp(72px, 9vw, 112px);
+        aspect-ratio: 1;
+        border-radius: 10px;
+        object-fit: cover;
+        background: rgba(255, 255, 255, 0.06);
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+        display: block;
+      }
+
+      .cover-empty {
+        display: grid;
+        place-items: center;
+        color: var(--ink-3);
+      }
+
+      .meta {
+        min-width: 0;
+      }
+
+      h1 {
+        font-size: clamp(2.1rem, 6.4vw, 5.6rem);
+        font-weight: 750;
+        font-variation-settings: 'opsz' 96;
+        line-height: 0.96;
+        letter-spacing: -0.025em;
+        text-wrap: balance;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+        padding-bottom: 0.06em;
+      }
+
+      .artist {
+        margin-top: 10px;
+        font-size: clamp(1.05rem, 1.8vw, 1.45rem);
+        color: var(--ink-2);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
+      body.idle h1 {
+        color: var(--ink-2);
+      }
+
+      /* Transport */
+      .transport {
+        display: grid;
+        grid-template-columns: auto 1fr auto;
+        align-items: center;
+        gap: clamp(16px, 2.5vw, 28px);
+        margin-top: clamp(24px, 3.5vw, 40px);
+      }
+
+      .listen {
+        display: inline-flex;
+        align-items: center;
+        gap: 12px;
+        height: 52px;
+        border: 0;
+        border-radius: 999px;
+        background: var(--ink);
+        color: var(--base);
+        font-size: 17px;
+        font-weight: 650;
+        cursor: pointer;
+        transition: transform 0.15s ease, background-color 0.3s;
+        width: clamp(72px, 9vw, 112px);
+        justify-content: center;
+        padding: 0;
+        min-width: 112px;
+      }
+
+      .listen svg {
+        width: 18px;
+        height: 18px;
+        flex: none;
+      }
+
+      .listen:active {
+        transform: scale(0.97);
+      }
+
+      .listen:disabled {
+        background: rgba(255, 255, 255, 0.08);
+        color: var(--ink-3);
+        cursor: default;
+      }
+
+      .listen.host {
+        width: auto;
+        padding: 0 20px;
+      }
+
+      .listen.host svg {
+        display: none;
+      }
+
+      .listen.on {
+        background: var(--accent);
+      }
+
+      .timeline {
+        display: grid;
+        grid-template-columns: auto 1fr auto;
+        align-items: center;
+        gap: 14px;
+        font-size: 14px;
+        color: var(--ink-2);
+        font-variant-numeric: tabular-nums;
+      }
+
+      .bar {
+        height: 4px;
+        border-radius: 2px;
+        background: var(--line);
+        overflow: hidden;
+      }
+
+      .bar span {
+        display: block;
+        height: 100%;
+        width: 0;
+        background: var(--ink);
+        border-radius: inherit;
+      }
+
+      .side {
+        display: flex;
+        align-items: center;
+        gap: 18px;
+        font-size: 14px;
+        color: var(--ink-3);
+        white-space: nowrap;
+      }
+
+      .volume {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        color: var(--ink-2);
+      }
+
+      .volume svg {
+        width: 18px;
+        height: 18px;
+      }
+
+      input[type='range'] {
+        -webkit-appearance: none;
+        appearance: none;
+        width: 96px;
+        height: 4px;
+        border-radius: 2px;
+        background: var(--line);
+        accent-color: var(--ink);
+        cursor: pointer;
+      }
+
+      input[type='range']::-webkit-slider-thumb {
+        -webkit-appearance: none;
+        width: 14px;
+        height: 14px;
+        border-radius: 50%;
+        background: var(--ink);
+      }
+
+      input[type='range']::-moz-range-thumb {
+        width: 14px;
+        height: 14px;
+        border: 0;
+        border-radius: 50%;
+        background: var(--ink);
+      }
+
+      /* Played earlier */
+      .earlier {
+        position: relative;
+        padding: 0 var(--gutter) 48px;
+        background: rgba(0, 0, 0, 0.55);
+      }
+
+      .earlier h2 {
+        font-size: 15px;
+        font-weight: 600;
+        color: var(--ink-2);
+        padding: 28px 0 14px;
+        border-top: 1px solid var(--line);
+      }
+
+      .earlier ol {
+        list-style: none;
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+        gap: 14px 28px;
+      }
+
+      .earlier li {
+        display: grid;
+        grid-template-columns: 44px 1fr;
+        gap: 12px;
+        align-items: center;
+        min-width: 0;
+      }
+
+      .earlier img,
+      .earlier .ph {
+        width: 44px;
+        height: 44px;
+        border-radius: 6px;
+        object-fit: cover;
+        background: rgba(255, 255, 255, 0.06);
+      }
+
+      .earlier b,
+      .earlier small {
+        display: block;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
+      .earlier b {
+        font-weight: 600;
+        font-size: 15px;
+      }
+
+      .earlier small {
+        font-size: 13px;
+        color: var(--ink-3);
+        margin-top: 2px;
+      }
+
+      @media (max-width: 720px) {
+        .transport {
+          grid-template-columns: auto 1fr;
+        }
+        .side {
+          grid-column: 1 / -1;
+          justify-content: space-between;
+        }
+        .top .listeners {
+          display: none;
+        }
+        input[type='range'] {
+          width: 120px;
+        }
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        *,
+        *::before,
+        *::after {
+          animation: none !important;
+          transition: none !important;
+        }
+      }
+    </style>
+  </head>
+  <body class="idle">
+    <div class="ambient" aria-hidden="true"><img id="ambient" alt="" /></div>
+
+    <main class="stage">
+      <header class="top">
+        <span class="onair"><i></i><span id="status">Connecting</span></span>
+        <span class="listeners" id="listeners"></span>
+        <span class="spacer"></span>
+        <button class="copy" id="copy">Copy link</button>
+      </header>
+
+      <div class="viz"><canvas id="viz" aria-hidden="true"></canvas><p class="hint" id="hint" hidden>Press Listen to tune in.</p></div>
+
+      <section>
+        <div class="now">
+          <div id="coverWrap"><div class="cover cover-empty" id="coverEmpty">♪</div></div>
+          <div class="meta">
+            <h1 id="title">Nothing playing</h1>
+            <p class="artist" id="artist">This page goes live on its own when music starts.</p>
+          </div>
+        </div>
+
+        <div class="transport">
+          <button class="listen" id="listen" disabled>
+            <svg id="icon" viewBox="0 0 24 24" fill="currentColor"><path d="M7 4.5v15l13-7.5z" /></svg>
+            <span id="listenLabel">Listen</span>
+          </button>
+          <div class="timeline">
+            <span id="elapsed">0:00</span>
+            <div class="bar"><span id="progress"></span></div>
+            <span id="duration">0:00</span>
+          </div>
+          <div class="side">
+            <span id="source"></span>
+            <label class="volume" title="Volume">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M11 5 6 9H2v6h4l5 4z" /><path d="M15.5 8.5a5 5 0 0 1 0 7" /><path d="M19 5a10 10 0 0 1 0 14" />
+              </svg>
+              <input type="range" id="volume" min="0" max="1" step="0.01" value="1" aria-label="Volume" />
+            </label>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <section class="earlier" id="earlier" hidden>
+      <h2>Played earlier</h2>
+      <ol id="history"></ol>
+    </section>
+
+    <audio id="player" preload="none"></audio>
+
+    <script>
+      const $ = (id) => document.getElementById(id);
+      const player = $('player');
+      const listenBtn = $('listen');
+      const root = document.documentElement.style;
+      const PLAY = '<path d="M7 4.5v15l13-7.5z"/>';
+      const STOP = '<rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/>';
+
+      let state = { playing: false, history: [] };
+      let wantListen = false;
+      let isHost = false; // this page is open on the streaming Mac itself
+      let hostBars = null; // spectrum sent by the server, used on the streaming Mac
+      let levelsSource = null;
+
+      const APP_NAMES = {
+        'com.spotify.client': 'Spotify',
+        'com.apple.Music': 'Apple Music',
+        'com.google.Chrome': 'Chrome',
+        'com.apple.Safari': 'Safari',
+        'company.thebrowser.Browser': 'Arc',
+        'com.microsoft.edgemac': 'Edge',
+        'org.mozilla.firefox': 'Firefox',
+        'com.brave.Browser': 'Brave',
+      };
+
+      // ---------- Helpers ----------
+
+      const fmt = (s) => {
+        if (s == null || !isFinite(s)) return '–:––';
+        s = Math.max(0, Math.floor(s));
+        const h = Math.floor(s / 3600);
+        const m = Math.floor((s % 3600) / 60);
+        const ss = String(s % 60).padStart(2, '0');
+        return h ? `${h}:${String(m).padStart(2, '0')}:${ss}` : `${m}:${ss}`;
+      };
+
+      const ago = (t) => {
+        const m = Math.round((Date.now() - t) / 60000);
+        if (m < 1) return 'just now';
+        if (m < 60) return `${m} min ago`;
+        const h = Math.round(m / 60);
+        return `${h} hr ago`;
+      };
+
+      // YouTube-style titles: "Artist - Song ft. X (Official Video)" by "ArtistVEVO"
+      function cleanTrack(title = '', artist = '') {
+        let t = title
+          .replace(/\s*[\(\[][^\)\]]*\b(official|lyrics?|audio|video|visuali[sz]er|hd|hq|4k|remaster(ed)?|mv)\b[^\)\]]*[\)\]]/gi, '')
+          .trim();
+        let a = artist.replace(/\s*-\s*Topic$/i, '').replace(/VEVO$/i, '').trim();
+        const squash = (s) => s.toLowerCase().replace(/[^a-z0-9]/g, '');
+        const dash = t.match(/^(.+?)\s+[-–—]\s+(.+)$/);
+        if (dash && (!a || squash(dash[1]).includes(squash(a)) || squash(a).includes(squash(dash[1])))) {
+          a = dash[1].trim();
+          t = dash[2].trim();
+        }
+        const feat = t.match(/^(.+?)\s+(?:ft\.?|feat\.?|featuring)\s+(.+)$/i);
+        if (feat) {
+          t = feat[1].trim();
+          a = a ? `${a} feat. ${feat[2].trim()}` : `feat. ${feat[2].trim()}`;
+        }
+        return { title: t || title, artist: a };
+      }
+
+      // Pick a vivid colour from the artwork and a dark base tinted by it
+      // Favicon: three equalizer bars on the track's colour; grey when off air.
+      let lastFavicon = '';
+      function updateFavicon() {
+        const css = getComputedStyle(document.documentElement);
+        const live = isLive();
+        const bg = live ? css.getPropertyValue('--accent').trim() : '#6f6b78';
+        const fg = live ? css.getPropertyValue('--base').trim() : '#d9d5de';
+        const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><rect width="32" height="32" rx="8" fill="${bg}"/><g fill="${fg}"><rect x="7" y="13" width="4" height="12" rx="2"/><rect x="14" y="7" width="4" height="18" rx="2"/><rect x="21" y="11" width="4" height="14" rx="2"/></g></svg>`;
+        if (svg === lastFavicon) return;
+        lastFavicon = svg;
+        $('favicon').href = 'data:image/svg+xml,' + encodeURIComponent(svg);
+      }
+
+      function paletteFrom(img) {
+        try {
+          const c = document.createElement('canvas');
+          c.width = c.height = 24;
+          const g = c.getContext('2d', { willReadFrequently: true });
+          g.drawImage(img, 0, 0, 24, 24);
+          const px = g.getImageData(0, 0, 24, 24).data;
+          let best = null;
+          let sum = [0, 0, 0];
+          for (let i = 0; i < px.length; i += 4) {
+            const [r, gg, b] = [px[i], px[i + 1], px[i + 2]];
+            sum[0] += r;
+            sum[1] += gg;
+            sum[2] += b;
+            const max = Math.max(r, gg, b);
+            const min = Math.min(r, gg, b);
+            const sat = max ? (max - min) / max : 0;
+            const score = sat * (max / 255) * (max > 60 ? 1 : 0.2);
+            if (!best || score > best.score) best = { score, rgb: [r, gg, b] };
+          }
+          const n = px.length / 4;
+          const avg = sum.map((v) => v / n);
+          const [h, s] = rgbToHsl(...(best.score > 0.15 ? best.rgb : avg));
+          root.setProperty('--accent', `hsl(${h} ${Math.max(s, 45)}% 68%)`);
+          root.setProperty('--base', `hsl(${h} ${Math.min(s, 40)}% 9%)`);
+          updateFavicon();
+        } catch {}
+      }
+
+      function rgbToHsl(r, g, b) {
+        r /= 255;
+        g /= 255;
+        b /= 255;
+        const max = Math.max(r, g, b);
+        const min = Math.min(r, g, b);
+        const l = (max + min) / 2;
+        if (max === min) return [0, 0, l * 100];
+        const d = max - min;
+        const s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+        const h = max === r ? (g - b) / d + (g < b ? 6 : 0) : max === g ? (b - r) / d + 2 : (r - g) / d + 4;
+        return [Math.round(h * 60), Math.round(s * 100), l * 100];
+      }
+
+      // ---------- Audio ----------
+
+      let audioCtx, analyser, freq;
+
+      function setupAnalyser() {
+        if (audioCtx) return audioCtx.resume();
+        try {
+          audioCtx = new AudioContext();
+          analyser = audioCtx.createAnalyser();
+          analyser.fftSize = 4096;
+          analyser.smoothingTimeConstant = 0.78;
+          freq = new Uint8Array(analyser.frequencyBinCount);
+          audioCtx.createMediaElementSource(player).connect(analyser);
+          analyser.connect(audioCtx.destination);
+        } catch {
+          analyser = null;
+        }
+      }
+
+      function connectAudio() {
+        player.src = '/stream?t=' + Date.now();
+        player.play().catch(() => {});
+      }
+
+      function disconnectAudio() {
+        player.pause();
+        player.removeAttribute('src');
+        player.load();
+      }
+
+      $('volume').addEventListener('input', (e) => (player.volume = e.target.value));
+
+      // ---------- Render ----------
+
+      const isLive = () => state.playing && state.streaming;
+
+      function render() {
+        const live = isLive();
+        document.body.classList.toggle('live', live);
+        updateFavicon();
+        document.body.classList.toggle('idle', !live);
+        $('status').textContent = live ? 'On air' : state.title ? 'Paused' : 'Off air';
+        $('listeners').textContent = live
+          ? !state.listeners
+            ? 'Nobody tuned in yet'
+            : state.listeners === 1
+              ? '1 person listening'
+              : `${state.listeners} people listening`
+          : '';
+        $('hint').hidden = !live || wantListen || isHost;
+
+        const track = cleanTrack(state.title, state.artist);
+        $('title').textContent = state.title ? track.title : 'Nothing playing';
+        $('artist').textContent = state.title
+          ? track.artist || state.album || ' '
+          : 'This page goes live on its own when music starts.';
+        $('source').textContent = state.app ? `Playing from ${APP_NAMES[state.app] || state.app}` : '';
+        document.title = state.title ? `${track.title}${track.artist ? ' — ' + track.artist : ''}` : 'On my desk';
+
+        renderArtwork(state.title ? state.artwork : null);
+
+        listenBtn.disabled = !live || isHost;
+        listenBtn.classList.toggle('on', live && wantListen);
+        $('listenLabel').textContent = isHost ? 'Muted here' : live && wantListen ? 'Stop' : 'Listen';
+        listenBtn.classList.toggle('host', isHost);
+        listenBtn.title = isHost ? 'This Mac is the source; playing the stream here would echo. Listen from another device.' : '';
+        $('icon').innerHTML = live && wantListen ? STOP : PLAY;
+
+        if (live && wantListen && !player.getAttribute('src')) connectAudio();
+        if ((!live || !wantListen) && player.getAttribute('src')) disconnectAudio();
+
+        if ('mediaSession' in navigator && state.title && !isHost) {
+          navigator.mediaSession.metadata = new MediaMetadata({
+            title: track.title,
+            artist: track.artist,
+            album: state.album,
+            artwork: state.artwork ? [{ src: state.artwork }] : [],
+          });
+        }
+
+        renderHistory();
+      }
+
+      let shownArt = null;
+      function renderArtwork(src) {
+        if (src === shownArt) return;
+        shownArt = src;
+        const wrap = $('coverWrap');
+        const amb = $('ambient');
+        if (!src) {
+          wrap.innerHTML = '<div class="cover cover-empty">♪</div>';
+          amb.classList.remove('on');
+          root.setProperty('--accent', '#b9a6ff');
+          root.setProperty('--base', '#16141c');
+          updateFavicon();
+          return;
+        }
+        const img = new Image();
+        img.className = 'cover';
+        img.alt = '';
+        img.onload = () => {
+          if (shownArt !== src) return;
+          wrap.replaceChildren(img);
+          amb.src = src;
+          amb.classList.add('on');
+          paletteFrom(img);
+        };
+        img.src = src;
+      }
+
+      function renderHistory() {
+        const earlier = (state.history || []).slice(state.title ? 1 : 0);
+        $('earlier').hidden = !earlier.length;
+        $('history').innerHTML = '';
+        for (const h of earlier) {
+          const t = cleanTrack(h.title, h.artist);
+          const li = document.createElement('li');
+          const art = h.artwork ? Object.assign(new Image(), { src: h.artwork, alt: '' }) : Object.assign(document.createElement('div'), { className: 'ph' });
+          const text = document.createElement('div');
+          text.style.minWidth = 0;
+          const b = document.createElement('b');
+          b.textContent = t.title;
+          const small = document.createElement('small');
+          small.textContent = [t.artist, ago(h.startedAt)].filter(Boolean).join(', ');
+          text.append(b, small);
+          li.append(art, text);
+          $('history').append(li);
+        }
+      }
+
+      function tick() {
+        let elapsed = state.elapsed;
+        if (elapsed != null && state.playing) elapsed += ((performance.now() - state.receivedAt) / 1000) * (state.rate || 1);
+        if (state.duration) elapsed = Math.min(elapsed ?? 0, state.duration);
+        $('elapsed').textContent = state.title ? fmt(elapsed) : '0:00';
+        $('duration').textContent = state.title ? fmt(state.duration) : '0:00';
+        $('progress').style.width = state.duration ? `${(100 * (elapsed || 0)) / state.duration}%` : '0';
+      }
+
+      // ---------- Spectrum ----------
+
+      const canvas = $('viz');
+      const ctx = canvas.getContext('2d');
+      const BARS = 96;
+      const levels = new Float32Array(BARS);
+      let W = 0;
+      let H = 0;
+
+      new ResizeObserver(() => {
+        const dpr = window.devicePixelRatio || 1;
+        W = canvas.clientWidth;
+        H = canvas.clientHeight;
+        canvas.width = W * dpr;
+        canvas.height = H * dpr;
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      }).observe(canvas);
+
+      function draw() {
+        requestAnimationFrame(draw);
+        if (!W || !H) return;
+        const local = analyser && wantListen && isLive() && !player.paused;
+        if (local) analyser.getByteFrequencyData(freq);
+        // On the streaming Mac the server sends the bars (it can't play the stream here without echo).
+        const remote = !local && isHost && isLive() && hostBars;
+
+        const nyquist = (audioCtx?.sampleRate || 48000) / 2;
+        const lo = Math.log(40);
+        const hi = Math.log(16000);
+        for (let i = 0; i < BARS; i++) {
+          let target = 0;
+          let m = -1;
+          if (local) {
+            const f0 = Math.exp(lo + ((hi - lo) * i) / BARS);
+            const f1 = Math.exp(lo + ((hi - lo) * (i + 1)) / BARS);
+            const b0 = Math.floor((f0 / nyquist) * freq.length);
+            const b1 = Math.max(b0 + 1, Math.floor((f1 / nyquist) * freq.length));
+            m = 0;
+            for (let b = b0; b < b1; b++) m = Math.max(m, freq[b]);
+          } else if (remote) {
+            m = hostBars[Math.floor((i * hostBars.length) / BARS)];
+          }
+          if (m >= 0) target = Math.pow(m / 255, 1.6) * (0.75 + 0.5 * (i / BARS)); // lift the highs a little
+          levels[i] += (target - levels[i]) * (target > levels[i] ? 0.5 : 0.12);
+        }
+
+        ctx.clearRect(0, 0, W, H);
+        const gap = Math.max(2, W / BARS / 3.2);
+        const bw = W / BARS - gap;
+        const accent = getComputedStyle(document.documentElement).getPropertyValue('--accent');
+        ctx.fillStyle = accent;
+        ctx.globalAlpha = 0.9;
+        for (let i = 0; i < BARS; i++) {
+          if (levels[i] < 0.01) continue; // no resting line, only real sound
+          const h = levels[i] * (H - 8);
+          const x = i * (bw + gap) + gap / 2;
+          ctx.beginPath();
+          ctx.roundRect(x, H - h, bw, h, Math.min(bw / 2, 4));
+          ctx.fill();
+        }
+        ctx.globalAlpha = 1;
+      }
+      requestAnimationFrame(draw);
+
+      // ---------- Wiring ----------
+
+      listenBtn.addEventListener('click', () => {
+        wantListen = !wantListen;
+        if (wantListen) setupAnalyser();
+        render();
+      });
+
+      // Reconnect if the stream drops while still on air (e.g. between tracks)
+      player.addEventListener('error', () => {
+        if (!player.getAttribute('src')) return;
+        player.removeAttribute('src');
+        setTimeout(render, 1500);
+      });
+
+      // navigator.clipboard only exists on https/localhost; colleagues open this over plain http.
+      function copyText(text) {
+        if (navigator.clipboard && window.isSecureContext) return navigator.clipboard.writeText(text);
+        const ta = document.createElement('textarea');
+        ta.value = text;
+        ta.setAttribute('readonly', '');
+        ta.style.cssText = 'position:fixed;top:0;left:0;opacity:0';
+        document.body.append(ta);
+        ta.select();
+        const ok = document.execCommand('copy');
+        ta.remove();
+        return ok ? Promise.resolve() : Promise.reject();
+      }
+
+      $('copy').addEventListener('click', async () => {
+        try {
+          await copyText(location.href);
+          $('copy').textContent = 'Link copied';
+        } catch {
+          $('copy').textContent = location.href; // last resort: show it to copy by hand
+        }
+        setTimeout(() => ($('copy').textContent = 'Copy link'), 2500);
+      });
+
+      const events = new EventSource('/events');
+      events.addEventListener('hello', (e) => {
+        isHost = JSON.parse(e.data).host;
+        if (isHost && !levelsSource) {
+          levelsSource = new EventSource('/levels');
+          levelsSource.onmessage = (ev) => {
+            hostBars = ev.data ? Uint8Array.from(atob(ev.data), (c) => c.charCodeAt(0)) : null;
+          };
+        }
+        if (isHost) wantListen = false;
+        render();
+      });
+      events.onmessage = (e) => {
+        state = JSON.parse(e.data);
+        state.receivedAt = performance.now();
+        render();
+        tick();
+      };
+      events.onerror = () => ($('status').textContent = 'Reconnecting');
+      setInterval(tick, 500);
+      setInterval(renderHistory, 60000);
+    </script>
+  </body>
+</html>
