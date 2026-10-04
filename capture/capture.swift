@@ -204,7 +204,7 @@ func startSystemTap(app: String? = nil) {
 
     let outputUID = defaultOutputUID()
     let description: [String: Any] = [
-        kAudioAggregateDeviceNameKey: "Music Share Tap",
+        kAudioAggregateDeviceNameKey: "Desk Radio Tap",
         kAudioAggregateDeviceUIDKey: UUID().uuidString,
         kAudioAggregateDeviceMainSubDeviceKey: outputUID,
         kAudioAggregateDeviceIsPrivateKey: true,

@@ -1,7 +1,7 @@
 module.exports = {
   apps: [
     {
-      name: 'music-share',
+      name: 'desk-radio',
       script: 'server.js',
       cwd: __dirname,
       autorestart: true,

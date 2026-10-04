@@ -16,12 +16,12 @@ Share the music playing on your Mac with your team, live. desk-radio captures yo
 ## Setup
 
 ```sh
-./capture/build.sh          # builds capture/MusicShareCapture.app
+./capture/build.sh          # builds capture/DeskRadioCapture.app
 cp .env.example .env        # pick AUDIO_SOURCE (see comments in the file)
 pm2 start ecosystem.config.js && pm2 save
 ```
 
-On first capture, macOS asks for permission for **Music Share Capture**:
+On first capture, macOS asks for permission for **Desk Radio Capture**:
 
 - `app:` and `system` sources: System Settings → Privacy & Security → Screen & System Audio Recording → *System Audio Recording Only*
 - device sources (BlackHole, microphone): Privacy & Security → Microphone
@@ -36,10 +36,10 @@ Rebuilding the capture app changes its signature, so you have to grant the permi
 | `system` | Everything the Mac plays, no driver needed (don't combine with eqMac) |
 | a device ID, e.g. `BlackHole2ch_UID` | That input device |
 
-List device IDs with `capture/MusicShareCapture.app/Contents/MacOS/MusicShareCapture --list`.
-After changing `.env`, run `pm2 restart music-share`.
+List device IDs with `capture/DeskRadioCapture.app/Contents/MacOS/DeskRadioCapture --list`.
+After changing `.env`, run `pm2 restart desk-radio`.
 
 ## Notes
 
 - The page on the streaming Mac doesn't play the stream, because it would echo and take over macOS Now Playing. It still shows the waves, which the server computes.
-- Logs: `pm2 logs music-share`
+- Logs: `pm2 logs desk-radio`

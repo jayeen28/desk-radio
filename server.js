@@ -1,11 +1,11 @@
-// Live music share server (replaces VLC).
+// Desk Radio server (replaces VLC).
 //  - Watches macOS Now Playing via `media-control stream`
-//  - While music is playing: captures AUDIO_SOURCE (from .env) with ./capture/MusicShareCapture.app, encodes MP3 with ffmpeg
+//  - While music is playing: captures AUDIO_SOURCE (from .env) with ./capture/DeskRadioCapture.app, encodes MP3 with ffmpeg
 //  - Serves:  /         -> index.html
 //             /stream   -> live MP3 (only while music is playing)
 //             /events   -> Server-Sent Events with now-playing info
 //             /artwork  -> current track's artwork
-// Run: pm2 start ecosystem.config.js   (settings in .env; `pm2 restart music-share` after changing them)
+// Run: pm2 start ecosystem.config.js   (settings in .env; `pm2 restart desk-radio` after changing them)
 
 const http = require('http');
 const net = require('net');
@@ -28,8 +28,8 @@ const IGNORED_APPS = new Set(['org.videolan.vlc']);
 // Grace period before stopping the stream after music pauses (avoids flapping between tracks).
 const STOP_DELAY_MS = 5000;
 
-const CAPTURE_APP = path.join(__dirname, 'capture', 'MusicShareCapture.app');
-const CAPTURE_BIN = path.join(CAPTURE_APP, 'Contents', 'MacOS', 'MusicShareCapture');
+const CAPTURE_APP = path.join(__dirname, 'capture', 'DeskRadioCapture.app');
+const CAPTURE_BIN = path.join(CAPTURE_APP, 'Contents', 'MacOS', 'DeskRadioCapture');
 const INDEX_HTML = path.join(__dirname, 'index.html');
 
 
@@ -206,7 +206,7 @@ function launchCapture(enc) {
     spawn('open', ['-g', '-n', '-a', CAPTURE_APP, '--args', AUDIO_SOURCE, '--connect', String(port)], { stdio: 'ignore' });
   });
   const timeout = setTimeout(() => {
-    if (!socket) console.error('capture app did not connect: allow "Music Share Capture" in System Settings > Privacy & Security > Microphone, and check the audio source exists');
+    if (!socket) console.error('capture app did not connect: allow "Desk Radio Capture" in System Settings > Privacy & Security > Microphone, and check the audio source exists');
   }, 15000);
   return {
     kill() {
@@ -216,7 +216,7 @@ function launchCapture(enc) {
       socket?.destroy();
       // The app only notices a closed socket when it next writes, which never happens if the source is
       // silent, so stop it explicitly. Its --connect port identifies this launch.
-      if (port) spawn('pkill', ['-f', `MusicShareCapture .* --connect ${port}$`], { stdio: 'ignore' });
+      if (port) spawn('pkill', ['-f', `DeskRadioCapture .* --connect ${port}$`], { stdio: 'ignore' });
     },
   };
 }
@@ -411,7 +411,7 @@ if (!fs.existsSync(CAPTURE_BIN)) {
 
 // Capture apps left over from a previous run (crash, kill -9) would keep recording forever.
 // Start watching only after they're gone, so the cleanup can't hit a freshly launched one.
-spawn('pkill', ['-f', 'MusicShareCapture.app/Contents/MacOS/MusicShareCapture'], { stdio: 'ignore' }).on('exit', () => {
+spawn('pkill', ['-f', 'DeskRadioCapture.app/Contents/MacOS/DeskRadioCapture'], { stdio: 'ignore' }).on('exit', () => {
   watchNowPlaying();
   setInterval(resyncNowPlaying, 4000);
 });
