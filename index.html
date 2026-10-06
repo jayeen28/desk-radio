@@ -476,7 +476,6 @@
             <span id="duration">0:00</span>
           </div>
           <div class="side">
-            <span id="source"></span>
             <label class="volume" title="Volume">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M11 5 6 9H2v6h4l5 4z" /><path d="M15.5 8.5a5 5 0 0 1 0 7" /><path d="M19 5a10 10 0 0 1 0 14" />
@@ -508,17 +507,6 @@
       let isHost = false; // this page is open on the streaming Mac itself
       let hostBars = null; // spectrum sent by the server, used on the streaming Mac
       let levelsSource = null;
-
-      const APP_NAMES = {
-        'com.spotify.client': 'Spotify',
-        'com.apple.Music': 'Apple Music',
-        'com.google.Chrome': 'Chrome',
-        'com.apple.Safari': 'Safari',
-        'company.thebrowser.Browser': 'Arc',
-        'com.microsoft.edgemac': 'Edge',
-        'org.mozilla.firefox': 'Firefox',
-        'com.brave.Browser': 'Brave',
-      };
 
       // ---------- Helpers ----------
 
@@ -674,7 +662,6 @@
         $('artist').textContent = state.title
           ? track.artist || state.album || ' '
           : 'This page goes live on its own when music starts.';
-        $('source').textContent = state.app ? `Playing from ${APP_NAMES[state.app] || state.app}` : '';
         // On the host Mac only: listener count up front so it stays visible in a narrow tab, e.g. "(3) Song — Artist"
         document.title = (live && isHost ? `(${state.listeners || 0}) ` : '') + (state.title ? `${track.title}${track.artist ? ' — ' + track.artist : ''}` : 'On my desk');
 
