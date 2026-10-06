@@ -2,6 +2,12 @@
 
 Share the music playing on your Mac with your team, live. desk-radio captures your Mac's audio, streams it as MP3 over the local network, and serves a page that shows what's playing: title, artist, artwork, progress and a live spectrum. The page recolors itself to match each track.
 
+<p align="center">
+  <img src="screenshots/player-red.png" alt="desk-radio playing Big Poppa by The Notorious B.I.G., with the page tinted red to match the artwork" width="49%">
+  <img src="screenshots/player-green.png" alt="desk-radio playing a Snoop Dogg track, with the page tinted green and yellow to match the artwork" width="49%">
+</p>
+<p align="center"><sub>Each track gets its own palette, taken from its artwork.</sub></p>
+
 - Streams only while music is playing (read from macOS Now Playing)
 - Captures eqMac's enhanced output, everything the Mac plays, or any input device
 - Colleagues open `http://<your-mac-ip>/` and press **Listen**
