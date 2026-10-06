@@ -349,6 +349,55 @@ function isHost(req) {
   return Object.values(os.networkInterfaces()).flat().some((i) => i.address === ip);
 }
 
+// ---------- Join notifications ----------
+// macOS notification on this Mac when someone starts listening, with their IP and, if the device answers,
+// its mDNS name (e.g. "Someones-MacBook.local"). The page reconnects between tracks, so a device only
+// counts as joining again after it has been gone for REJOIN_MS.
+
+const REJOIN_MS = 60000;
+const listenerIps = new Map(); // ip -> open /stream connections
+const leftAt = new Map(); // ip -> when its last connection closed
+
+function clientIp(req) {
+  return (req.socket.remoteAddress || '').replace(/^::ffff:/, '');
+}
+
+// Plain reverse DNS rarely knows LAN devices; ask them directly over multicast DNS, then fall back to it.
+function hostName(ip) {
+  return new Promise((resolve) => {
+    const proc = spawn('dig', ['-x', ip, '@224.0.0.251', '-p', '5353', '+short', '+time=1', '+tries=1'], { stdio: ['ignore', 'pipe', 'ignore'] });
+    let out = '';
+    proc.stdout.on('data', (d) => (out += d));
+    proc.on('error', () => {});
+    proc.on('close', () => {
+      const name = out.split('\n')[0].trim().replace(/\.$/, '');
+      if (name && !name.startsWith(';')) return resolve(name);
+      require('dns').reverse(ip, (err, names) => resolve(err ? null : names[0] || null));
+    });
+  });
+}
+
+function notify(title, message) {
+  const q = (s) => JSON.stringify(String(s)); // AppleScript string literal
+  spawn('osascript', ['-e', `display notification ${q(message)} with title ${q(title)}`], { stdio: 'ignore' }).on('error', () => {});
+}
+
+async function listenerJoined(ip) {
+  const count = (listenerIps.get(ip) || 0) + 1;
+  listenerIps.set(ip, count);
+  if (count > 1 || Date.now() - (leftAt.get(ip) ?? -Infinity) < REJOIN_MS) return;
+  const name = await hostName(ip);
+  console.log(`★ ${name ? `${name} (${ip})` : ip} joined`);
+  notify('Desk Radio', `${name ? `${name} (${ip})` : ip} joined the stream`);
+}
+
+function listenerLeft(ip) {
+  const count = (listenerIps.get(ip) || 1) - 1;
+  if (count > 0) return listenerIps.set(ip, count);
+  listenerIps.delete(ip);
+  leftAt.set(ip, Date.now());
+}
+
 const server = http.createServer((req, res) => {
   const url = new URL(req.url, 'http://x');
 
@@ -378,7 +427,10 @@ const server = http.createServer((req, res) => {
     listeners.add(res);
     console.log(`+ listener (${listeners.size})`);
     broadcast();
+    const ip = clientIp(req);
+    listenerJoined(ip);
     req.on('close', () => {
+      listenerLeft(ip);
       listeners.delete(res);
       console.log(`- listener (${listeners.size})`);
       broadcast();
