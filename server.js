@@ -328,14 +328,23 @@ setInterval(() => {
   for (const res of levelClients) res.write(`data: ${data}\n\n`);
 }, 40);
 
-const eventClients = new Set();
-let lastSent = '';
+const eventClients = new Map(); // res -> opened on this Mac
+let lastSent = { host: '', guest: '' };
+
+// Only the host page sees how many people are listening.
+function stateFor(host) {
+  const np = nowPlaying();
+  if (!host) delete np.listeners;
+  return JSON.stringify(np);
+}
 
 function broadcast() {
-  const data = JSON.stringify(nowPlaying());
-  if (data === lastSent) return;
+  const data = { host: stateFor(true), guest: stateFor(false) };
+  for (const res of eventClients.keys()) {
+    const kind = eventClients.get(res) ? 'host' : 'guest';
+    if (data[kind] !== lastSent[kind]) res.write(`data: ${data[kind]}\n\n`);
+  }
   lastSent = data;
-  for (const res of eventClients) res.write(`data: ${data}\n\n`);
 }
 
 // Fallback for browsers that ask for /favicon.ico; the page swaps in a live, track-coloured version.
@@ -406,9 +415,10 @@ const server = http.createServer((req, res) => {
     fs.createReadStream(INDEX_HTML).pipe(res);
   } else if (url.pathname === '/events') {
     res.writeHead(200, { 'Content-Type': 'text/event-stream', 'Cache-Control': 'no-cache', Connection: 'keep-alive' });
-    res.write(`event: hello\ndata: ${JSON.stringify({ host: isHost(req) })}\n\n`);
-    res.write(`data: ${JSON.stringify(nowPlaying())}\n\n`);
-    eventClients.add(res);
+    const host = isHost(req);
+    res.write(`event: hello\ndata: ${JSON.stringify({ host })}\n\n`);
+    res.write(`data: ${stateFor(host)}\n\n`);
+    eventClients.set(res, host);
     const ping = setInterval(() => res.write(': ping\n\n'), 20000);
     req.on('close', () => {
       clearInterval(ping);

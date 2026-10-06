@@ -658,7 +658,9 @@
         updateFavicon();
         document.body.classList.toggle('idle', !live);
         $('status').textContent = live ? 'On air' : state.title ? 'Paused' : 'Off air';
-        $('listeners').textContent = live
+        $('listeners').textContent = !isHost
+          ? ''
+          : live
           ? !state.listeners
             ? 'Nobody tuned in yet'
             : state.listeners === 1
