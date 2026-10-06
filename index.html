@@ -673,7 +673,8 @@
           ? track.artist || state.album || ' '
           : 'This page goes live on its own when music starts.';
         $('source').textContent = state.app ? `Playing from ${APP_NAMES[state.app] || state.app}` : '';
-        document.title = state.title ? `${track.title}${track.artist ? ' — ' + track.artist : ''}` : 'On my desk';
+        // On the host Mac only: listener count up front so it stays visible in a narrow tab, e.g. "(3) Song — Artist"
+        document.title = (live && isHost ? `(${state.listeners || 0}) ` : '') + (state.title ? `${track.title}${track.artist ? ' — ' + track.artist : ''}` : 'On my desk');
 
         renderArtwork(state.title ? state.artwork : null);
 
